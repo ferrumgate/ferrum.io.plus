@@ -61,8 +61,6 @@ namespace ferrum::io::common
     using Malloc = void *(size_t);
     using Realloc = void *(void *, size_t);
 
-    using UV_tcp_init = int(uv_loop_t *, uv_tcp_t *);
-
 };
 
 #endif

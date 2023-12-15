@@ -21,9 +21,9 @@ TEST(BufferTest, constructor_zero)
 
 TEST(BufferTest, constructor_exception)
 {
-    ASSERT_ANY_THROW(Buffer<int32_t>(10,
-                                     [](size_t a)
-                                     { return nullptr; }););
+    auto func = [](size_t a)
+    { return std::shared_ptr<int32_t[]>{}; };
+    ASSERT_ANY_THROW(Buffer<int32_t>(10, func));
 }
 
 TEST(BufferTest, move_constructor)
@@ -107,8 +107,9 @@ TEST(BufferTest, reserve)
 TEST(BufferTest, reserve_with_error)
 {
 
-    auto k = Buffer<int32_t>(0, [](size_t len)
-                             { return nullptr; });
+    auto func = [](size_t a)
+    { return std::shared_ptr<int32_t[]>{}; };
+    auto k = Buffer<int32_t>(0, func);
     auto result = k.reserve_noexcept(20);
     ASSERT_TRUE(result != 0);
 }

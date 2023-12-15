@@ -17,7 +17,7 @@ namespace ferrum::io::memory
     template <typename T>
     class Buffer
     {
-        using Allocator = std::function<std::shared_ptr<T[]>(size_t)>;
+        using Allocator = std::shared_ptr<T[]>(size_t);
 
     public:
         static auto malloc_array(size_t len)
@@ -26,7 +26,9 @@ namespace ferrum::io::memory
         };
 
         Buffer(size_t len = 0, Allocator malloc = Buffer<T>::malloc_array) : len{len},
-                                                                             reserved{len}, data{nullptr}, malloc(malloc)
+                                                                             reserved{len},
+                                                                             data{nullptr},
+                                                                             malloc(malloc)
         {
 
             if (len)
@@ -128,7 +130,7 @@ namespace ferrum::io::memory
         size_t len;
 
     private:
-        Allocator malloc;
+        Allocator *malloc;
     };
 
 };
