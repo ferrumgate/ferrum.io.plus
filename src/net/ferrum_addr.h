@@ -17,6 +17,7 @@ namespace ferrum::io::net
         FerrumAddr &operator=(const FerrumAddr &addr);
         FerrumAddr(FerrumAddr &&addr) = delete;
         FerrumAddr &operator=(FerrumAddr &&addr) = delete;
+        virtual ~FerrumAddr() = default;
         bool is_ipv4() const;
         bool is_ipv6() const;
         std::string to_string(bool print_port = false) const;

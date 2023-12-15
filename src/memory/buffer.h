@@ -39,8 +39,17 @@ namespace ferrum::io::memory
                 }
             }
         };
-        Buffer(Buffer &buffer) = delete;
-        Buffer &operator=(Buffer &buf) = delete;
+        Buffer(Buffer &buffer) : data(new T[buffer.reserved]), len(buffer.len), reserved(buffer.reserved)
+        {
+            std::memcpy(data.get(), buffer.array_ptr(), len * sizeof(T));
+        };
+        Buffer &operator=(Buffer &buffer)
+        {
+            data = new T[buffer.reserved];
+            std::memcpy(data, buffer.data, buffer.len);
+            len = buffer.len;
+            reserved = buffer.reserved;
+        };
         Buffer(Buffer &&other)
             : len{other.len}, reserved{other.reserved}, data{std::move(other.data)},
               malloc{std::move(other.malloc)}
@@ -66,10 +75,11 @@ namespace ferrum::io::memory
         }
         T *clone_ptr() const
         {
-            auto ptr = new T[size];
-            std::memcpy(ptr, data, len * sizeof(T));
+            auto ptr = new T[len];
+            std::memcpy(ptr, data.get(), sizeof(T) * len);
             return ptr;
         }
+
         size_t capacity() const
         {
             return reserved;
@@ -108,7 +118,7 @@ namespace ferrum::io::memory
         {
             len = size;
         }
-        ~Buffer()
+        virtual ~Buffer()
         {
         }
 

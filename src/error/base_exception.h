@@ -14,7 +14,7 @@ namespace ferrum::io::error
         BaseException(const BaseException &&ex);
         BaseException &operator=(const BaseException &ex);
         BaseException &operator=(const BaseException &&ex);
-        ~BaseException() = default;
+        virtual ~BaseException() = default;
         virtual const char *what() const noexcept override;
         std::string get_message() const noexcept;
         common::ErrorCodes get_error_code() const noexcept;

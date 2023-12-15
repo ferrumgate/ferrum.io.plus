@@ -50,6 +50,7 @@ namespace ferrum::io::common
         AppError,
         ConvertError,
         SocketError,
+        SocketClosedError,
         MemoryError,
     };
 
@@ -57,8 +58,10 @@ namespace ferrum::io::common
      * @brief libc functions for testing
      *
      */
-    using Malloc = std::function<void *(size_t)>;
-    using Realloc = std::function<void *(void *, size_t)>;
+    using Malloc = void *(size_t);
+    using Realloc = void *(void *, size_t);
+
+    using UV_tcp_init = int(uv_loop_t *, uv_tcp_t *);
 
 };
 

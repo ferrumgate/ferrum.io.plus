@@ -30,19 +30,23 @@ namespace ferrum::io::net
         virtual void on_error(CallbackOnError &func) override;
 
     protected:
-        FerrumAddr addr;
-        CallbackOnOpen callback_on_open;
-        CallbackOnRead callback_on_read;
-        CallbackOnWrite callback_on_write;
-        CallbackOnClose callback_on_close;
-        CallbackOnError callback_on_error;
-        // libuv fields
-        uv_tcp_t tcp_data;
-        uv_connect_t connect_data;
-        // temporary buffer for libuv data
-        BufferByte read_buffer;
-        bool is_close_called;
-        bool is_open_called;
+        struct Socket
+        {
+            FerrumAddr addr;
+            CallbackOnOpen callback_on_open;
+            CallbackOnRead callback_on_read;
+            CallbackOnWrite callback_on_write;
+            CallbackOnClose callback_on_close;
+            CallbackOnError callback_on_error;
+            // libuv fields
+            uv_tcp_t tcp_data;
+            uv_connect_t connect_data;
+            // buffer for libuv read data
+            BufferByte read_buffer;
+            bool is_close_called{false};
+            bool is_open_called{false};
+        };
+        Socket *socket{nullptr};
 
     public: // friend functions
         friend void socket_on_connect(uv_connect_t *connection, int status);

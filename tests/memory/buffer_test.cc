@@ -57,6 +57,37 @@ TEST(BufferTest, move_operator)
     ASSERT_TRUE(k.array() == nullptr);
 }
 
+TEST(BufferTest, copy_constructor)
+{
+    auto k = Buffer<int32_t>(5);
+    ASSERT_EQ(k.size(), 5);
+    ASSERT_EQ(k.capacity(), 5);
+    ASSERT_TRUE(k.array() != nullptr);
+
+    auto ptr = k.array();
+    auto k1{k};
+    ASSERT_EQ(k1.size(), 5);
+    ASSERT_EQ(k1.capacity(), 5);
+    ASSERT_TRUE(k1.array() != nullptr);
+    ASSERT_TRUE(ptr != k1.array());
+    ASSERT_TRUE(k.array() != nullptr);
+}
+TEST(BufferTest, copy_operator)
+{
+    auto k = Buffer<int32_t>(5);
+    ASSERT_EQ(k.size(), 5);
+    ASSERT_EQ(k.capacity(), 5);
+    ASSERT_TRUE(k.array() != nullptr);
+
+    auto ptr = k.array();
+    auto k1 = k;
+    ASSERT_EQ(k1.size(), 5);
+    ASSERT_EQ(k1.capacity(), 5);
+    ASSERT_TRUE(k1.array() != nullptr);
+    ASSERT_TRUE(ptr != k1.array());
+    ASSERT_TRUE(k.array() != nullptr);
+}
+
 TEST(BufferTest, reserve)
 {
     auto k = Buffer<int32_t>();

@@ -13,8 +13,9 @@ add_executable(
     hello_test.cc
     error/base_exception_test.cc
     log/logger_test.cc
-    net/ferrum_addr_test.cc
     memory/buffer_test.cc
+    net/ferrum_addr_test.cc
+    net/ferrum_socket_tcp_test.cc
 )
 
 target_link_libraries(
