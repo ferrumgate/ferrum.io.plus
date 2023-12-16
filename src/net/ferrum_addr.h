@@ -3,7 +3,6 @@
 
 #include "../common/common.h"
 #include "../error/base_exception.h"
-#include <uv.h>
 
 namespace ferrum::io::net
 {

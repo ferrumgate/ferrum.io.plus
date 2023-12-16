@@ -142,7 +142,7 @@ namespace ferrum::io::net
     {
 
         auto loop = uv_default_loop();
-        auto result = uv_tcp_init(loop, &socket->tcp_data);
+        auto result = common::FuncTable::uv_tcp_init(loop, &socket->tcp_data);
         if (result < 0)
         {
             throw error::BaseException(
@@ -153,7 +153,7 @@ namespace ferrum::io::net
 
         auto bind_addr = FerrumAddr("::");
         auto bind_addr6 = bind_addr.get_addr();
-        result = uv_tcp_bind(&socket->tcp_data, bind_addr6, 0);
+        result = common::FuncTable::uv_tcp_bind(&socket->tcp_data, bind_addr6, 0);
         if (result < 0)
         {
             throw error::BaseException(
@@ -187,7 +187,7 @@ namespace ferrum::io::net
     {
         if (socket->is_open_called)
             return;
-        auto result = uv_tcp_connect(&socket->connect_data, &socket->tcp_data, socket->addr.get_addr(), socket_on_connect);
+        auto result = common::FuncTable::uv_tcp_connect(&socket->connect_data, &socket->tcp_data, socket->addr.get_addr(), socket_on_connect);
         if (result < 0)
         {
             throw error::BaseException(
@@ -232,23 +232,23 @@ namespace ferrum::io::net
                                        std::format("sending data failed to {}", socket->addr.to_string(true)));
         }
     }
-    void FerrumSocketTcp::on_open(CallbackOnOpen &func)
+    void FerrumSocketTcp::on_open(CallbackOnOpen func)
     {
         socket->callback_on_open = func;
     }
-    void FerrumSocketTcp::on_read(CallbackOnRead &func)
+    void FerrumSocketTcp::on_read(CallbackOnRead func)
     {
         socket->callback_on_read = func;
     }
-    void FerrumSocketTcp::on_write(CallbackOnWrite &func)
+    void FerrumSocketTcp::on_write(CallbackOnWrite func)
     {
         socket->callback_on_write = func;
     }
-    void FerrumSocketTcp::on_close(CallbackOnClose &func)
+    void FerrumSocketTcp::on_close(CallbackOnClose func)
     {
         socket->callback_on_close = func;
     }
-    void FerrumSocketTcp::on_error(CallbackOnError &func)
+    void FerrumSocketTcp::on_error(CallbackOnError func)
     {
         socket->callback_on_error = func;
     }

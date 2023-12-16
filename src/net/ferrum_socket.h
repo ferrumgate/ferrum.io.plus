@@ -7,7 +7,6 @@
 #include "../error/base_exception.h"
 #include "../log/logger.h"
 #include "../memory/buffer.h"
-#include <uv.h>
 
 namespace ferrum::io::net
 {
@@ -16,11 +15,11 @@ namespace ferrum::io::net
     using BufferByte = memory::Buffer<std::byte>; //  std::vector<std::byte>;
 
     // callbacks
-    using CallbackOnOpen = std::function<void()>;
-    using CallbackOnRead = std::function<void(const BufferByte &data)>;
-    using CallbackOnWrite = std::function<void()>;
-    using CallbackOnClose = std::function<void()>;
-    using CallbackOnError = std::function<void(error::BaseException)>;
+    using CallbackOnOpen = void();
+    using CallbackOnRead = void(const BufferByte &data);
+    using CallbackOnWrite = void();
+    using CallbackOnClose = void();
+    using CallbackOnError = void(error::BaseException);
 
     class FerrumSocket
     {
@@ -35,25 +34,26 @@ namespace ferrum::io::net
         virtual void open() = 0;
         virtual void close() = 0;
         virtual void write(const BufferByte &data) = 0;
-        virtual void on_open(CallbackOnOpen &func) = 0;
-        virtual void on_read(CallbackOnRead &func) = 0;
-        virtual void on_write(CallbackOnWrite &func) = 0;
-        virtual void on_close(CallbackOnClose &func) = 0;
-        virtual void on_error(CallbackOnError &func) = 0;
+        virtual void on_open(CallbackOnOpen func) = 0;
+        virtual void on_read(CallbackOnRead func) = 0;
+        virtual void on_write(CallbackOnWrite func) = 0;
+        virtual void on_close(CallbackOnClose func) = 0;
+        virtual void on_error(CallbackOnError func) = 0;
 
     protected:
+        // std::shared_ptr<std::any> data;
     };
 
     using FerrumSocketPtr = std::unique_ptr<FerrumSocket>;
-    using CallbackOnAccept = std::function<void(FerrumSocket &client)>;
+    using CallbackOnAccept = void(FerrumSocket &&client);
 
     class FerrumSocketListener
     {
     public:
         virtual void listen() = 0;
-        virtual void on_accept(CallbackOnAccept &func) = 0;
+        virtual void on_accept(CallbackOnAccept func) = 0;
         virtual void close() = 0;
-        virtual void on_close(std::function<void()> &func) = 0;
+        virtual void on_close(CallbackOnClose func) = 0;
         virtual void on_error(CallbackOnError &func);
     };
 }

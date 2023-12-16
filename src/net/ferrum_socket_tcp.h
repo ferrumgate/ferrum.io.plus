@@ -23,21 +23,21 @@ namespace ferrum::io::net
         virtual void open() override;
         virtual void close() override;
         virtual void write(const BufferByte &data) override;
-        virtual void on_open(CallbackOnOpen &func) override;
-        virtual void on_read(CallbackOnRead &func) override;
-        virtual void on_write(CallbackOnWrite &func) override;
-        virtual void on_close(CallbackOnClose &func) override;
-        virtual void on_error(CallbackOnError &func) override;
+        virtual void on_open(CallbackOnOpen func) override;
+        virtual void on_read(CallbackOnRead func) override;
+        virtual void on_write(CallbackOnWrite func) override;
+        virtual void on_close(CallbackOnClose func) override;
+        virtual void on_error(CallbackOnError func) override;
 
     protected:
         struct Socket
         {
             FerrumAddr addr;
-            CallbackOnOpen callback_on_open;
-            CallbackOnRead callback_on_read;
-            CallbackOnWrite callback_on_write;
-            CallbackOnClose callback_on_close;
-            CallbackOnError callback_on_error;
+            CallbackOnOpen *callback_on_open{nullptr};
+            CallbackOnRead *callback_on_read{nullptr};
+            CallbackOnWrite *callback_on_write{nullptr};
+            CallbackOnClose *callback_on_close{nullptr};
+            CallbackOnError *callback_on_error{nullptr};
             // libuv fields
             uv_tcp_t tcp_data;
             uv_connect_t connect_data;

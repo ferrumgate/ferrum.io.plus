@@ -19,6 +19,8 @@
 #include <variant>
 #include <format>
 #include <cstring>
+#include <any>
+#include <uv.h>
 
 namespace ferrum::io::common
 {
@@ -37,7 +39,7 @@ namespace ferrum::io::common
         Http2,
         Http3,
         SSH,
-        RDP
+        Rdp
     };
 
     /**
@@ -60,6 +62,31 @@ namespace ferrum::io::common
      */
     using Malloc = void *(size_t);
     using Realloc = void *(void *, size_t);
+
+    using UVDefaultLoop = uv_loop_t *(void);
+    using UVTcpInit = int(uv_loop_t *, uv_tcp_t *);
+    using UVReadStart = int(uv_stream_t *, uv_alloc_cb, uv_read_cb);
+    using UVTcpConnect = int(uv_connect_t *, uv_tcp_t *, const struct sockaddr *, uv_connect_cb);
+    using UVWrite = int(uv_write_t *, uv_stream_t *, const uv_buf_t[], unsigned int, uv_write_cb);
+    using UVTcpBind = int(uv_tcp_t *, const struct sockaddr *, unsigned int);
+
+    /**
+     * @brief For writing test codes for c functions
+     I think best easy way, no performance overhead
+     *
+     */
+    struct FuncTable
+    {
+        static Malloc *malloc;
+        static Realloc *realloc;
+        static UVDefaultLoop *uv_default_loop;
+        static UVTcpInit *uv_tcp_init;
+        static UVReadStart *uv_read_start;
+        static UVTcpConnect *uv_tcp_connect;
+        static UVWrite *uv_write;
+        static UVTcpBind *uv_tcp_bind;
+        static void reset();
+    };
 
 };
 

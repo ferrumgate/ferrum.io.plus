@@ -11,6 +11,8 @@ FetchContent_MakeAvailable(googletest)
 add_executable(
     hello_test
     hello_test.cc
+    integration/server_client/tcpecho.c
+    integration/server_client/udpecho.c
     error/base_exception_test.cc
     log/logger_test.cc
     memory/buffer_test.cc

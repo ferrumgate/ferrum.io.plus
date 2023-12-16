@@ -1,5 +1,6 @@
 
 set(FILES_CC
+    common/common.cc
     log/logger.cc
     util/util.cc
     error/base_exception.cc
