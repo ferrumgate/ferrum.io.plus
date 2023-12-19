@@ -28,11 +28,14 @@ namespace ferrum::io::net
         virtual void on_write(CallbackOnWrite func) override;
         virtual void on_close(CallbackOnClose func) override;
         virtual void on_error(CallbackOnError func) override;
+        virtual void share(Shared shared) override;
+        virtual void bind(const FerrumAddr &addr) override;
 
     protected:
         struct Socket
         {
             FerrumAddr addr;
+            FerrumAddr bind_addr;
             CallbackOnOpen *callback_on_open{nullptr};
             CallbackOnRead *callback_on_read{nullptr};
             CallbackOnWrite *callback_on_write{nullptr};
@@ -45,6 +48,7 @@ namespace ferrum::io::net
             BufferByte read_buffer;
             bool is_close_called{false};
             bool is_open_called{false};
+            Shared shared;
         };
         Socket *socket{nullptr};
 

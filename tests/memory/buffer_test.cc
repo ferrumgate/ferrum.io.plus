@@ -109,7 +109,28 @@ TEST(BufferTest, reserve_with_error)
 
     auto func = [](size_t a)
     { return std::shared_ptr<int32_t[]>{}; };
-    auto k = Buffer<int32_t>(0, func);
+    auto k = Buffer<int32_t>(size_t(0), func);
+
     auto result = k.reserve_noexcept(20);
     ASSERT_TRUE(result != 0);
+}
+
+TEST(BufferTest, to_string)
+{
+    char data[] = {'h', 'e', 'l', 'l', 'o', 0};
+    auto k = Buffer<char>(6);
+    std::copy(data, data + 6, k.array_ptr());
+    auto str = k.to_string();
+    ASSERT_STREQ(str.c_str(), "hello");
+    // auto px =
+}
+
+TEST(BufferTest, to_string2)
+{
+    char data[] = {'h', 'e', 'l', 'l', 'o', 0};
+
+    auto k = Buffer<char>(data, 6);
+    auto str = k.to_string();
+    ASSERT_STREQ(str.c_str(), "hello");
+    // auto px =
 }

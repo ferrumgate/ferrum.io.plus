@@ -7,7 +7,7 @@ namespace ferrum::io::util
 {
     class Util
     {
-    };
+        };
 
 };
 

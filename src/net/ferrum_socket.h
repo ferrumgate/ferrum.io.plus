@@ -11,15 +11,20 @@
 namespace ferrum::io::net
 {
 
+    struct FerrumShared
+    {
+    };
+
     // zero copy buffer
     using BufferByte = memory::Buffer<std::byte>; //  std::vector<std::byte>;
+    using Shared = std::shared_ptr<FerrumShared>;
 
     // callbacks
-    using CallbackOnOpen = void();
-    using CallbackOnRead = void(const BufferByte &data);
-    using CallbackOnWrite = void();
-    using CallbackOnClose = void();
-    using CallbackOnError = void(error::BaseException);
+    using CallbackOnOpen = void(Shared &);
+    using CallbackOnRead = void(Shared &, const BufferByte &data);
+    using CallbackOnWrite = void(Shared &);
+    using CallbackOnClose = void(Shared &);
+    using CallbackOnError = void(Shared &, error::BaseException);
 
     class FerrumSocket
     {
@@ -31,6 +36,9 @@ namespace ferrum::io::net
         FerrumSocket &operator=(FerrumSocket &&) = default;
         virtual ~FerrumSocket() = default;
 
+        virtual void share(Shared shared) = 0;
+        virtual void bind(const FerrumAddr &addr) = 0;
+
         virtual void open() = 0;
         virtual void close() = 0;
         virtual void write(const BufferByte &data) = 0;
@@ -41,7 +49,6 @@ namespace ferrum::io::net
         virtual void on_error(CallbackOnError func) = 0;
 
     protected:
-        // std::shared_ptr<std::any> data;
     };
 
     using FerrumSocketPtr = std::unique_ptr<FerrumSocket>;
@@ -56,6 +63,7 @@ namespace ferrum::io::net
         virtual void on_close(CallbackOnClose func) = 0;
         virtual void on_error(CallbackOnError &func);
     };
+
 }
 
 #endif

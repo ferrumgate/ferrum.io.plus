@@ -1,5 +1,22 @@
 #include "common/common.h"
 
+struct A
+{
+    int a;
+    virtual void f()
+    {
+        std::cout << "executing A" << std::endl;
+    }
+};
+struct B : public A
+{
+    int b;
+    virtual void f()
+    {
+        std::cout << "executing B" << std::endl;
+    }
+};
+
 int main()
 {
     std::vector<int> test;

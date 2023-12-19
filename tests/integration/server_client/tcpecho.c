@@ -64,7 +64,7 @@ int tcp_echo_start(int port, int isserver)
   fcntl(server_fd, F_SETFL, O_NONBLOCK);
   return 0;
 }
-static pthread_t thread;
+static pthread_t thread = 0;
 static int work = 1;
 static void *threaded_listen(void *data)
 {
@@ -80,6 +80,7 @@ static void *threaded_listen(void *data)
     {
       fcntl(clientfd_tmp, F_SETFL, O_NONBLOCK);
       client_fd = clientfd_tmp;
+      break;
     }
     usleep(10000);
   }
@@ -95,7 +96,9 @@ int tcp_echo_stop()
 {
   work = 0;
   void *ret;
-  pthread_join(thread, &ret);
+  if (thread)
+    pthread_join(thread, &ret);
+  thread = 0;
   return 0;
 }
 int tcp_echo_recv(char buf[ECHO_BUF_SIZE])

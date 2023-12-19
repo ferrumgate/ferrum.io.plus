@@ -14,6 +14,8 @@ const int32_t TCPSERVER_PORT = 9999;
 
 using namespace ferrum::io::net;
 using namespace ferrum::io::common;
+using namespace ferrum::io::memory;
+using namespace ferrum::io::error;
 
 class FerrumSocketTcpTest : public testing::Test
 {
@@ -28,10 +30,11 @@ protected:
     {
         uv_loop_close(uv_default_loop());
         FuncTable::reset();
+        tcp_echo_stop();
     }
 };
 
-TEST(FerrumSocketTcp, constructor)
+TEST_F(FerrumSocketTcpTest, constructor)
 {
     int32_t counter;
     {
@@ -41,7 +44,7 @@ TEST(FerrumSocketTcp, constructor)
     loop(counter, 100, true); // wait for loop cycle
 }
 
-TEST(FerrumSocketTcp, constructor_throws_exception)
+TEST_F(FerrumSocketTcpTest, constructor_throws_exception)
 {
     int32_t counter;
     FuncTable::uv_tcp_init = [](uv_loop_t *, uv_tcp_t *) -> int
@@ -52,19 +55,8 @@ TEST(FerrumSocketTcp, constructor_throws_exception)
     EXPECT_ANY_THROW(FerrumSocketTcp(FerrumAddr{"127.0.0.1", 8080}));
     loop(counter, 100, true); // wait for loop cycle
 }
-TEST(FerrumSocketTcp, constructor_throws_exception2)
-{
-    int32_t counter;
-    FuncTable::uv_tcp_bind = [](uv_tcp_t *, const struct sockaddr *, unsigned int) -> int
-    {
-        return -2;
-    };
 
-    EXPECT_ANY_THROW(FerrumSocketTcp(FerrumAddr{"127.0.0.1", 8080}));
-    loop(counter, 100, true); // wait for loop cycle
-}
-
-TEST(FerrumSocketTcp, open_throws_exception)
+TEST_F(FerrumSocketTcpTest, open_throws_exception)
 {
 
     int32_t counter;
@@ -79,22 +71,140 @@ TEST(FerrumSocketTcp, open_throws_exception)
     loop(counter, 100, true); // wait for loop cycle
 }
 
-TEST(FerrumSocketTcp, socket_on_connect_called)
+TEST_F(FerrumSocketTcpTest, socket_on_connect_called)
 {
     auto result = tcp_echo_start(9998, 1);
     tcp_echo_listen();
+    int counter = 0;
 
-    int32_t counter;
-    FuncTable::uv_tcp_connect = [](uv_connect_t *, uv_tcp_t *, const struct sockaddr *, uv_connect_cb) -> int
+    struct CustomShared : public FerrumShared
+    {
+        bool connected{false};
+    };
+
+    auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
+    auto context = std::make_shared<CustomShared>(CustomShared{});
+    socket.share(context);
+    socket.on_open([](Shared &shared)
+                   { auto cls = static_cast<CustomShared*>(shared.get());
+                   cls->connected=true; });
+    loop(counter, 100, true); // wait for loop cycle
+    socket.open();
+    loop(counter, 100, true); // wait for loop cycle
+    EXPECT_TRUE(context->connected == true);
+    loop(counter, 100, true); // wait for loop cycle
+}
+
+TEST_F(FerrumSocketTcpTest, socket_on_connect_failed)
+{
+    auto result = tcp_echo_start(9998, 1);
+    tcp_echo_listen();
+    int counter = 0;
+
+    struct CustomShared : public FerrumShared
+    {
+        bool connected{false};
+        bool onError{false};
+    };
+
+    auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9997});
+    auto context = std::make_shared<CustomShared>(CustomShared{});
+    socket.share(context);
+    socket.on_open([](Shared &shared)
+                   { auto cls = static_cast<CustomShared*>(shared.get());
+                   cls->connected=true; });
+    socket.on_error([](Shared &shared, auto error)
+                    {
+        auto cls=static_cast<CustomShared*>(shared.get());
+        cls->onError=true; });
+
+    loop(counter, 100, true); // wait for loop cycle
+    socket.open();
+    loop(counter, 100, true); // wait for loop cycle
+    EXPECT_TRUE(context->connected == false);
+    loop(counter, 100, true); // wait for loop cycle
+}
+
+TEST_F(FerrumSocketTcpTest, socket_on_connect_uv_read_start_failed)
+{
+    auto result = tcp_echo_start(9998, 1);
+    tcp_echo_listen();
+    int counter = 0;
+
+    FuncTable::uv_read_start = [](uv_stream_t *,
+                                  uv_alloc_cb,
+                                  uv_read_cb) -> int
     {
         return -2;
     };
 
-    auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
-    /* socket.on_open([&socket]() {
+    struct CustomShared : public FerrumShared
+    {
+        bool connected{false};
+        bool onError{false};
+    };
 
-    }); */
+    auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
+    auto context = std::make_shared<CustomShared>(CustomShared{});
+    socket.share(context);
+    socket.on_open([](Shared &shared)
+                   { auto cls = static_cast<CustomShared*>(shared.get());
+                   cls->connected=true; });
+    socket.on_error([](Shared &shared, auto error)
+                    {
+        auto cls=static_cast<CustomShared*>(shared.get());
+        cls->onError=true; });
     loop(counter, 100, true); // wait for loop cycle
     socket.open();
     loop(counter, 100, true); // wait for loop cycle
+    EXPECT_TRUE(context->connected == false);
+    EXPECT_TRUE(context->onError == true);
+    loop(counter, 100, true); // wait for loop cycle
+}
+
+TEST_F(FerrumSocketTcpTest, integration_with_nginx)
+{
+    int32_t counter = 0;
+
+    struct CustomShared : public FerrumShared
+    {
+        bool connected{false};
+        bool onError{false};
+        std::vector<std::byte> data;
+        std::string data_s;
+        int counter{0};
+    };
+    // html header get message
+    const char *head = "GET / HTTP/1.0\r\n\
+Host: nodejs.org\r\n\
+User-Agent: ferrum\r\n\
+Accept: text/html\r\n\
+\r\n";
+
+    for (size_t i = 0; i < 10; i++)
+    {
+
+        auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 8080});
+        auto context = std::make_shared<CustomShared>(CustomShared{});
+        socket.share(context);
+        socket.on_error([](Shared &shared, BaseException ex)
+                        { std::cout << ex.get_message() << std::endl; });
+        socket.on_read([](Shared &shared, const BufferByte &data)
+                       {
+                        auto cls = static_cast<CustomShared *>(shared.get());
+                        auto str=data.to_string();
+                        cls->data_s.append(str); });
+        socket.on_open([](Shared &shared)
+                       { auto cls = static_cast<CustomShared*>(shared.get());
+                    cls->connected=true;cls->counter++; });
+
+        loop(counter, 100, true); // wait for loop cycle
+        socket.open();
+        loop(counter, 1000, !context->connected); // wait for loop cycle
+                                                  // ASSERT_TRUE(context->connected);
+
+        socket.write(BufferByte(reinterpret_cast<const std::byte *>(head), strlen(head) + 1));
+        loop(counter, 100, true); // wait for loop cycle
+        ASSERT_TRUE(!context->data_s.empty());
+    }
 }
