@@ -212,7 +212,7 @@ namespace ferrum::io::net
         }
     }
 
-    void FerrumSocketTcp::close()
+    void FerrumSocketTcp::close() noexcept
     {
         if (socket->is_close_called)
             return;
@@ -249,27 +249,27 @@ namespace ferrum::io::net
                                        std::format("sending data failed to {}", socket->addr.to_string(true)));
         }
     }
-    void FerrumSocketTcp::on_open(CallbackOnOpen func)
+    void FerrumSocketTcp::on_open(CallbackOnOpen func) noexcept
     {
         socket->callback_on_open = func;
     }
-    void FerrumSocketTcp::on_read(CallbackOnRead func)
+    void FerrumSocketTcp::on_read(CallbackOnRead func) noexcept
     {
         socket->callback_on_read = func;
     }
-    void FerrumSocketTcp::on_write(CallbackOnWrite func)
+    void FerrumSocketTcp::on_write(CallbackOnWrite func) noexcept
     {
         socket->callback_on_write = func;
     }
-    void FerrumSocketTcp::on_close(CallbackOnClose func)
+    void FerrumSocketTcp::on_close(CallbackOnClose func) noexcept
     {
         socket->callback_on_close = func;
     }
-    void FerrumSocketTcp::on_error(CallbackOnError func)
+    void FerrumSocketTcp::on_error(CallbackOnError func) noexcept
     {
         socket->callback_on_error = func;
     }
-    void FerrumSocketTcp::share(Shared shared)
+    void FerrumSocketTcp::share(Shared shared) noexcept
     {
         socket->shared = shared;
     }

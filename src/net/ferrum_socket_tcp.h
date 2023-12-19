@@ -21,14 +21,14 @@ namespace ferrum::io::net
         virtual ~FerrumSocketTcp();
 
         virtual void open() override;
-        virtual void close() override;
+        virtual void close() noexcept override;
         virtual void write(const BufferByte &data) override;
-        virtual void on_open(CallbackOnOpen func) override;
-        virtual void on_read(CallbackOnRead func) override;
-        virtual void on_write(CallbackOnWrite func) override;
-        virtual void on_close(CallbackOnClose func) override;
-        virtual void on_error(CallbackOnError func) override;
-        virtual void share(Shared shared) override;
+        virtual void on_open(CallbackOnOpen func) noexcept override;
+        virtual void on_read(CallbackOnRead func) noexcept override;
+        virtual void on_write(CallbackOnWrite func) noexcept override;
+        virtual void on_close(CallbackOnClose func) noexcept override;
+        virtual void on_error(CallbackOnError func) noexcept override;
+        virtual void share(Shared shared) noexcept override;
         virtual void bind(const FerrumAddr &addr) override;
 
     protected:

@@ -20,11 +20,11 @@ namespace ferrum::io::net
     using Shared = std::shared_ptr<FerrumShared>;
 
     // callbacks
-    using CallbackOnOpen = void(Shared &);
-    using CallbackOnRead = void(Shared &, const BufferByte &data);
-    using CallbackOnWrite = void(Shared &);
-    using CallbackOnClose = void(Shared &);
-    using CallbackOnError = void(Shared &, error::BaseException);
+    using CallbackOnOpen = void(Shared &) noexcept;
+    using CallbackOnRead = void(Shared &, const BufferByte &data) noexcept;
+    using CallbackOnWrite = void(Shared &) noexcept;
+    using CallbackOnClose = void(Shared &) noexcept;
+    using CallbackOnError = void(Shared &, error::BaseException) noexcept;
 
     class FerrumSocket
     {
@@ -36,17 +36,17 @@ namespace ferrum::io::net
         FerrumSocket &operator=(FerrumSocket &&) = default;
         virtual ~FerrumSocket() = default;
 
-        virtual void share(Shared shared) = 0;
+        virtual void share(Shared shared) noexcept = 0;
         virtual void bind(const FerrumAddr &addr) = 0;
 
         virtual void open() = 0;
-        virtual void close() = 0;
+        virtual void close() noexcept = 0;
         virtual void write(const BufferByte &data) = 0;
-        virtual void on_open(CallbackOnOpen func) = 0;
-        virtual void on_read(CallbackOnRead func) = 0;
-        virtual void on_write(CallbackOnWrite func) = 0;
-        virtual void on_close(CallbackOnClose func) = 0;
-        virtual void on_error(CallbackOnError func) = 0;
+        virtual void on_open(CallbackOnOpen func) noexcept = 0;
+        virtual void on_read(CallbackOnRead func) noexcept = 0;
+        virtual void on_write(CallbackOnWrite func) noexcept = 0;
+        virtual void on_close(CallbackOnClose func) noexcept = 0;
+        virtual void on_error(CallbackOnError func) noexcept = 0;
 
     protected:
     };

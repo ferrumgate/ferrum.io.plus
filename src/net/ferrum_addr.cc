@@ -22,12 +22,12 @@ namespace ferrum::io::net
             addr = sock6;
         }
     }
-    FerrumAddr::FerrumAddr(const FerrumAddr &other)
+    FerrumAddr::FerrumAddr(const FerrumAddr &other) noexcept
         : addr{other.addr}, ip{other.ip}, port{other.port}, is_ipv4_address{other.is_ipv4_address}
     {
     }
 
-    FerrumAddr &FerrumAddr::operator=(const FerrumAddr &other)
+    FerrumAddr &FerrumAddr::operator=(const FerrumAddr &other) noexcept
     {
         addr = other.addr;
         ip = other.ip;
@@ -36,15 +36,15 @@ namespace ferrum::io::net
         return *this;
     }
 
-    bool FerrumAddr::is_ipv4() const
+    bool FerrumAddr::is_ipv4() const noexcept
     {
         return is_ipv4_address;
     }
-    bool FerrumAddr::is_ipv6() const
+    bool FerrumAddr::is_ipv6() const noexcept
     {
         return !is_ipv4_address;
     }
-    std::string FerrumAddr::to_string(bool print_port) const
+    std::string FerrumAddr::to_string(bool print_port) const noexcept
     {
         if (is_ipv4_address)
         {
@@ -62,15 +62,15 @@ namespace ferrum::io::net
         }
     }
 
-    const sockaddr_in *FerrumAddr::get_addr4() const
+    const sockaddr_in *FerrumAddr::get_addr4() const noexcept
     {
         return std::get_if<sockaddr_in>(&this->addr);
     }
-    const sockaddr_in6 *FerrumAddr::get_addr6() const
+    const sockaddr_in6 *FerrumAddr::get_addr6() const noexcept
     {
         return std::get_if<sockaddr_in6>(&this->addr);
     }
-    const sockaddr *FerrumAddr::get_addr() const
+    const sockaddr *FerrumAddr::get_addr() const noexcept
     {
         if (is_ipv4_address)
         {

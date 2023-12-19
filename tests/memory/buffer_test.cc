@@ -19,13 +19,6 @@ TEST(BufferTest, constructor_zero)
     ASSERT_TRUE(k.array() == nullptr);
 }
 
-TEST(BufferTest, constructor_exception)
-{
-    auto func = [](size_t a)
-    { return std::shared_ptr<int32_t[]>{}; };
-    ASSERT_ANY_THROW(Buffer<int32_t>(10, func));
-}
-
 TEST(BufferTest, move_constructor)
 {
     auto k = Buffer<int32_t>(5);

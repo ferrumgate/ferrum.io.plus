@@ -85,7 +85,7 @@ TEST_F(FerrumSocketTcpTest, socket_on_connect_called)
     auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
     auto context = std::make_shared<CustomShared>(CustomShared{});
     socket.share(context);
-    socket.on_open([](Shared &shared)
+    socket.on_open([](Shared &shared) noexcept
                    { auto cls = static_cast<CustomShared*>(shared.get());
                    cls->connected=true; });
     loop(counter, 100, true); // wait for loop cycle
@@ -110,12 +110,14 @@ TEST_F(FerrumSocketTcpTest, socket_on_connect_failed)
     auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9997});
     auto context = std::make_shared<CustomShared>(CustomShared{});
     socket.share(context);
-    socket.on_open([](Shared &shared)
-                   { auto cls = static_cast<CustomShared*>(shared.get());
+    socket.on_open([](Shared &shared) noexcept
+                   { 
+                    auto cls = reinterpret_cast<CustomShared*>(shared.get());
                    cls->connected=true; });
-    socket.on_error([](Shared &shared, auto error)
+    socket.on_error([](Shared &shared, auto error) noexcept
                     {
-        auto cls=static_cast<CustomShared*>(shared.get());
+
+        auto cls=reinterpret_cast<CustomShared*>(shared.get());
         cls->onError=true; });
 
     loop(counter, 100, true); // wait for loop cycle
@@ -147,10 +149,10 @@ TEST_F(FerrumSocketTcpTest, socket_on_connect_uv_read_start_failed)
     auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
     auto context = std::make_shared<CustomShared>(CustomShared{});
     socket.share(context);
-    socket.on_open([](Shared &shared)
+    socket.on_open([](Shared &shared) noexcept
                    { auto cls = static_cast<CustomShared*>(shared.get());
                    cls->connected=true; });
-    socket.on_error([](Shared &shared, auto error)
+    socket.on_error([](Shared &shared, auto error) noexcept
                     {
         auto cls=static_cast<CustomShared*>(shared.get());
         cls->onError=true; });
@@ -187,14 +189,14 @@ Accept: text/html\r\n\
         auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 8080});
         auto context = std::make_shared<CustomShared>(CustomShared{});
         socket.share(context);
-        socket.on_error([](Shared &shared, BaseException ex)
+        socket.on_error([](Shared &shared, BaseException ex) noexcept
                         { std::cout << ex.get_message() << std::endl; });
-        socket.on_read([](Shared &shared, const BufferByte &data)
+        socket.on_read([](Shared &shared, const BufferByte &data) noexcept
                        {
                         auto cls = static_cast<CustomShared *>(shared.get());
                         auto str=data.to_string();
                         cls->data_s.append(str); });
-        socket.on_open([](Shared &shared)
+        socket.on_open([](Shared &shared) noexcept
                        { auto cls = static_cast<CustomShared*>(shared.get());
                     cls->connected=true;cls->counter++; });
 

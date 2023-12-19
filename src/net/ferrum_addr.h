@@ -12,17 +12,17 @@ namespace ferrum::io::net
 
     public:
         FerrumAddr(const std::string &ip, uint16_t port = 0);
-        FerrumAddr(const FerrumAddr &addr);
-        FerrumAddr &operator=(const FerrumAddr &addr);
+        FerrumAddr(const FerrumAddr &addr) noexcept;
+        FerrumAddr &operator=(const FerrumAddr &addr) noexcept;
         FerrumAddr(FerrumAddr &&addr) = delete;
         FerrumAddr &operator=(FerrumAddr &&addr) = delete;
         virtual ~FerrumAddr() = default;
-        bool is_ipv4() const;
-        bool is_ipv6() const;
-        std::string to_string(bool print_port = false) const;
-        const sockaddr_in *get_addr4() const;
-        const sockaddr_in6 *get_addr6() const;
-        const sockaddr *get_addr() const;
+        bool is_ipv4() const noexcept;
+        bool is_ipv6() const noexcept;
+        std::string to_string(bool print_port = false) const noexcept;
+        const sockaddr_in *get_addr4() const noexcept;
+        const sockaddr_in6 *get_addr6() const noexcept;
+        const sockaddr *get_addr() const noexcept;
 
     private:
         std::variant<sockaddr_in, sockaddr_in6> addr;

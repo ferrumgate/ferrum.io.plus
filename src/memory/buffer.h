@@ -5,6 +5,8 @@
 #include "../memory/buffer.h"
 #include "../error/base_exception.h"
 #include "../log/logger.h"
+#define NDEBUG
+#include <cassert>
 
 namespace ferrum::io::memory
 {
@@ -20,43 +22,36 @@ namespace ferrum::io::memory
         using Allocator = std::shared_ptr<T[]>(size_t);
 
     public:
-        static auto malloc_array(size_t len)
+        static auto malloc_array(size_t len) noexcept
         {
             return std::shared_ptr<T[]>{new (std::nothrow) T[len]};
         };
 
-        Buffer(size_t len = 0, Allocator malloc = Buffer<T>::malloc_array) : len{len},
-                                                                             reserved{len},
-                                                                             data{nullptr},
-                                                                             malloc(malloc)
+        Buffer(size_t len = 0, Allocator malloc = Buffer<T>::malloc_array) noexcept : len{len},
+                                                                                      reserved{len},
+                                                                                      data{nullptr},
+                                                                                      malloc(malloc)
         {
 
             if (len)
             {
+
                 data = std::move(malloc(len));
-                if (!data)
-                {
-                    log::Logger::fatal("memory allocation failed");
-                    throw error::BaseException(common::ErrorCodes::MemoryError, "memory allocation failed");
-                }
+                assert(data);
             }
         };
 
-        Buffer(const T src[], size_t len, Allocator malloc = Buffer<T>::malloc_array) : len{len},
-                                                                                        reserved{0},
-                                                                                        data{nullptr},
-                                                                                        malloc(malloc)
+        Buffer(const T src[], size_t len, Allocator malloc = Buffer<T>::malloc_array) noexcept : len{len},
+                                                                                                 reserved{0},
+                                                                                                 data{nullptr},
+                                                                                                 malloc(malloc)
         {
 
             if (len)
             {
 
                 auto result = reserve_noexcept(len);
-                if (result)
-                {
-                    log::Logger::fatal("memory allocation failed");
-                    throw error::BaseException(common::ErrorCodes::MemoryError, "memory allocation failed");
-                }
+                assert(result);
                 std::memcpy(data.get(), src, len * sizeof(T));
             }
         }
@@ -65,7 +60,7 @@ namespace ferrum::io::memory
         {
             std::memcpy(data.get(), buffer.array_ptr(), len * sizeof(T));
         }
-        Buffer &operator=(Buffer &buffer)
+        Buffer &operator=(Buffer &buffer) noexcept
         {
             data = new T[buffer.reserved];
             std::memcpy(data, buffer.data, sizeof(T) * buffer.len);
@@ -78,7 +73,7 @@ namespace ferrum::io::memory
         {
             other.data = nullptr;
         }
-        Buffer &operator=(Buffer &&other)
+        Buffer &operator=(Buffer &&other) noexcept
         {
             data = other.data;
             other.data = nullptr;
@@ -90,22 +85,22 @@ namespace ferrum::io::memory
 
         virtual ~Buffer() = default;
 
-        std::shared_ptr<T[]> array() const
+        std::shared_ptr<T[]> array() const noexcept
         {
             return data;
         }
-        T *array_ptr() const
+        T *array_ptr() const noexcept
         {
             return data.get();
         }
 
-        T *clone_ptr() const
+        T *clone_ptr() const noexcept
         {
             auto ptr = new T[len];
             std::memcpy(ptr, data.get(), sizeof(T) * len);
             return ptr;
         }
-        std::unique_ptr<T[]> clone() const
+        std::unique_ptr<T[]> clone() const noexcept
         {
             auto ptr = std::unique_ptr<T[]>(new T[len]);
             std::memcpy(ptr.get(), data.get(), sizeof(T) * len);
@@ -116,7 +111,7 @@ namespace ferrum::io::memory
          *
          * @return size_t
          */
-        size_t capacity() const
+        size_t capacity() const noexcept
         {
             return reserved;
         }
@@ -124,13 +119,10 @@ namespace ferrum::io::memory
         /**
          * @brief reserve lenght
          */
-        int32_t reserve(size_t len)
+        int32_t reserve(size_t len) noexcept
         {
             auto res = reserve_noexcept(len);
-            if (res)
-            {
-                throw error::BaseException(common::ErrorCodes::MemoryError, "memory allocation failed");
-            }
+            assert(res);
             return res;
         }
 
@@ -151,7 +143,7 @@ namespace ferrum::io::memory
             return EXIT_SUCCESS;
         }
 
-        size_t size() const
+        size_t size() const noexcept
         {
             return len;
         }
