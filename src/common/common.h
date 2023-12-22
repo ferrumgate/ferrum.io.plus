@@ -69,6 +69,8 @@ namespace ferrum::io::common
     using UVTcpConnect = int(uv_connect_t *, uv_tcp_t *, const struct sockaddr *, uv_connect_cb);
     using UVWrite = int(uv_write_t *, uv_stream_t *, const uv_buf_t[], unsigned int, uv_write_cb);
     using UVTcpBind = int(uv_tcp_t *, const struct sockaddr *, unsigned int);
+    using UVFileNo = int(const uv_handle_t *, uv_os_fd_t *);
+    using UVListen = int(uv_stream_t *, int, uv_connection_cb);
 
     /**
      * @brief For writing test codes for c functions
@@ -85,6 +87,8 @@ namespace ferrum::io::common
         static UVTcpConnect *uv_tcp_connect;
         static UVWrite *uv_write;
         static UVTcpBind *uv_tcp_bind;
+        static UVFileNo *uv_fileno;
+        static UVListen *uv_listen;
         static void reset();
     };
 

@@ -12,6 +12,7 @@ namespace ferrum::io::net
 
     public:
         FerrumAddr(const std::string &ip, uint16_t port = 0);
+        FerrumAddr(const sockaddr *addr);
         FerrumAddr(const FerrumAddr &addr) noexcept;
         FerrumAddr &operator=(const FerrumAddr &addr) noexcept;
         FerrumAddr(FerrumAddr &&addr) = delete;

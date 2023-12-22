@@ -18,13 +18,18 @@ namespace ferrum::io::net
     // zero copy buffer
     using BufferByte = memory::Buffer<std::byte>; //  std::vector<std::byte>;
     using Shared = std::shared_ptr<FerrumShared>;
+    class FerrumSocket;
+    using FerrumSocketShared = std::shared_ptr<FerrumSocket>;
 
-    // callbacks
+    // callbacks for all typeof sockets
     using CallbackOnOpen = void(Shared &) noexcept;
     using CallbackOnRead = void(Shared &, const BufferByte &data) noexcept;
     using CallbackOnWrite = void(Shared &) noexcept;
     using CallbackOnClose = void(Shared &) noexcept;
     using CallbackOnError = void(Shared &, error::BaseException) noexcept;
+    // for server accept callback
+    class FerrumSocket;
+    using CallbackOnAccept = void(Shared &, FerrumSocketShared &client) noexcept;
 
     class FerrumSocket
     {
@@ -47,22 +52,12 @@ namespace ferrum::io::net
         virtual void on_write(CallbackOnWrite func) noexcept = 0;
         virtual void on_close(CallbackOnClose func) noexcept = 0;
         virtual void on_error(CallbackOnError func) noexcept = 0;
+        virtual void on_accept(CallbackOnAccept func) noexcept = 0;
 
     protected:
     };
 
     using FerrumSocketPtr = std::unique_ptr<FerrumSocket>;
-    using CallbackOnAccept = void(FerrumSocket &&client);
-
-    class FerrumSocketListener
-    {
-    public:
-        virtual void listen() = 0;
-        virtual void on_accept(CallbackOnAccept func) = 0;
-        virtual void close() = 0;
-        virtual void on_close(CallbackOnClose func) = 0;
-        virtual void on_error(CallbackOnError &func);
-    };
 
 }
 

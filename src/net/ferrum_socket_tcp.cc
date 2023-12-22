@@ -146,8 +146,53 @@ namespace ferrum::io::net
             }
     }
 
-    FerrumSocketTcp::FerrumSocketTcp(FerrumAddr &&addr)
-        : FerrumSocket{}, socket{new Socket{addr, FerrumAddr{"0.0.0.0"}}}
+    void socket_on_accept(uv_stream_t *server, int status)
+    {
+        auto socket = static_cast<FerrumSocketTcp::Socket *>(server->data);
+        if (status < 0)
+        {
+            log::Logger::debug(std::format("error on new accept {}", uv_strerror(status)));
+            if (socket && socket->callback_on_error)
+            {
+                socket->callback_on_error(socket->shared, error::BaseException(
+                                                              common::ErrorCodes::SocketError,
+                                                              std::format("error no new accept 1 {}", uv_strerror(status))));
+            }
+            return;
+        }
+        auto client = std::make_shared<FerrumSocketTcp>(FerrumSocketTcp{
+            FerrumAddr{"0.0.0.0"}});
+
+        auto result = uv_accept(server, reinterpret_cast<uv_stream_t *>(&client->socket->tcp_data));
+        if (result < 0)
+        {
+
+            if (socket && socket->callback_on_error)
+            {
+                socket->callback_on_error(socket->shared, error::BaseException(
+                                                              common::ErrorCodes::SocketError,
+                                                              std::format("error no new accept 2 {}", uv_strerror(status))));
+            }
+            return;
+        }
+        // get client ip and port
+        int addr_len = sizeof(sockaddr_storage);
+        auto addr = sockaddr_storage{};
+
+        // no need to check it
+        uv_tcp_getpeername(&client->socket->tcp_data, reinterpret_cast<sockaddr *>(&addr), &addr_len);
+        auto faddr = FerrumAddr{reinterpret_cast<const sockaddr *>(&addr)};
+        client->socket->addr = faddr;
+        log::Logger::info(std::format("connected client from {}", client->socket->addr.to_string(true)));
+        if (socket && socket->callback_on_accept)
+        {
+            auto client_casted = std::static_pointer_cast<FerrumSocket>(client);
+            socket->callback_on_accept(socket->shared, client_casted);
+        }
+    }
+
+    FerrumSocketTcp::FerrumSocketTcp(FerrumAddr &&addr, bool is_server)
+        : FerrumSocket{}, socket{new Socket{addr, FerrumAddr{"0.0.0.0"}, is_server}}
     {
 
         auto loop = uv_default_loop();
@@ -159,7 +204,6 @@ namespace ferrum::io::net
                 std::format("tcp socket create failed {}", uv_strerror(result)));
         }
         uv_tcp_keepalive(&socket->tcp_data, 1, 60);
-
         socket->tcp_data.data = socket;
     }
 
@@ -187,13 +231,46 @@ namespace ferrum::io::net
     {
         if (socket->is_open_called)
             return;
-        socket->connect_data.data = socket;
-        auto result = common::FuncTable::uv_tcp_connect(&socket->connect_data, &socket->tcp_data, socket->addr.get_addr(), socket_on_connect);
-        if (result < 0)
+        if (!socket->is_server)
         {
-            throw error::BaseException(
-                common::ErrorCodes::SocketError,
-                std::format("tcp socket open failed code: {} msg: {}", result, uv_strerror(result)));
+            socket->connect_data.data = socket;
+            auto result = common::FuncTable::uv_tcp_connect(&socket->connect_data, &socket->tcp_data, socket->addr.get_addr(), socket_on_connect);
+            if (result < 0)
+            {
+                throw error::BaseException(
+                    common::ErrorCodes::SocketError,
+                    std::format("tcp socket open failed code: {} msg: {}", result, uv_strerror(result)));
+            }
+        }
+        else
+        {
+            // if linux,then set reuse port option to socket
+            auto saddr = socket->addr.get_addr();
+            if (saddr->sa_family == AF_INET || saddr->sa_family == AF_INET6)
+            {
+                uv_os_fd_t fd;
+                auto result = common::FuncTable::uv_fileno(reinterpret_cast<uv_handle_t *>(&socket->tcp_data), &fd);
+                if (result < 0)
+                {
+
+                    throw error::BaseException(
+                        common::ErrorCodes::SocketError,
+                        std::format("tcp socket open failed code: {} msg: {}", result, uv_strerror(result)));
+                }
+                int32_t optval = 1;
+                setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+            }
+
+            bind(socket->addr);
+
+            auto result = common::FuncTable::uv_listen(reinterpret_cast<uv_stream_t *>(&socket->tcp_data), 16, socket_on_accept);
+            if (result < 0)
+            {
+                throw error::BaseException(
+                    common::ErrorCodes::SocketError,
+                    std::format("tcp socket open failed code: {} msg: {}", result, uv_strerror(result)));
+            }
+            log::Logger::info(std::format("socket started to listen at {}", socket->addr.to_string(true)));
         }
 
         socket->is_open_called = true;
@@ -268,6 +345,10 @@ namespace ferrum::io::net
     void FerrumSocketTcp::on_error(CallbackOnError func) noexcept
     {
         socket->callback_on_error = func;
+    }
+    void FerrumSocketTcp::on_accept(CallbackOnAccept func) noexcept
+    {
+        socket->callback_on_accept = func;
     }
     void FerrumSocketTcp::share(Shared shared) noexcept
     {

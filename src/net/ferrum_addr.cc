@@ -22,6 +22,34 @@ namespace ferrum::io::net
             addr = sock6;
         }
     }
+    FerrumAddr::FerrumAddr(const sockaddr *saddr) : ip(), port{0}, is_ipv4_address{true}
+    {
+        if (saddr->sa_family == AF_INET)
+        {
+            is_ipv4_address = true;
+            char dest[128] = {0};
+            auto addr4 = reinterpret_cast<const sockaddr_in *>(saddr);
+            uv_ip4_name(addr4, dest, 128);
+            port = ntohs(addr4->sin_port);
+            addr = *addr4;
+            ip = dest;
+            return;
+        }
+        else if (saddr->sa_family == AF_INET6)
+        {
+            is_ipv4_address = false;
+            char dest[128] = {0};
+            auto addr6 = reinterpret_cast<const sockaddr_in6 *>(saddr);
+            uv_ip6_name(addr6, dest, 128);
+            port = ntohs(addr6->sin6_port);
+            addr = *addr6;
+            ip = dest;
+            return;
+        }
+        else
+            throw ferrum::io::error::BaseException(common::ErrorCodes::ConvertError, "cannot init to FerrumAddr");
+    }
+
     FerrumAddr::FerrumAddr(const FerrumAddr &other) noexcept
         : addr{other.addr}, ip{other.ip}, port{other.port}, is_ipv4_address{other.is_ipv4_address}
     {

@@ -10,6 +10,8 @@ namespace ferrum::io::common
     UVTcpConnect *FuncTable::uv_tcp_connect{::uv_tcp_connect};
     UVWrite *FuncTable::uv_write{::uv_write};
     UVTcpBind *FuncTable::uv_tcp_bind{::uv_tcp_bind};
+    UVFileNo *FuncTable::uv_fileno{::uv_fileno};
+    UVListen *FuncTable::uv_listen{::uv_listen};
 
     void FuncTable::reset()
     {
@@ -21,6 +23,8 @@ namespace ferrum::io::common
         FuncTable::uv_tcp_connect = ::uv_tcp_connect;
         FuncTable::uv_write = ::uv_write;
         FuncTable::uv_tcp_bind = ::uv_tcp_bind;
+        FuncTable::uv_fileno = ::uv_fileno;
+        FuncTable::uv_listen = ::uv_listen;
     }
 
 }

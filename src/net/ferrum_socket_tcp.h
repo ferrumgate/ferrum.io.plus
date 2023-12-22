@@ -13,7 +13,7 @@ namespace ferrum::io::net
     class FerrumSocketTcp : public FerrumSocket
     {
     public:
-        FerrumSocketTcp(FerrumAddr &&addr);
+        FerrumSocketTcp(FerrumAddr &&addr, bool is_server = false);
         FerrumSocketTcp(FerrumSocketTcp &&socket);
         FerrumSocketTcp &operator=(FerrumSocketTcp &&socket);
         FerrumSocketTcp(const FerrumSocketTcp &socket) = delete;
@@ -28,6 +28,7 @@ namespace ferrum::io::net
         virtual void on_write(CallbackOnWrite func) noexcept override;
         virtual void on_close(CallbackOnClose func) noexcept override;
         virtual void on_error(CallbackOnError func) noexcept override;
+        virtual void on_accept(CallbackOnAccept func) noexcept override;
         virtual void share(Shared shared) noexcept override;
         virtual void bind(const FerrumAddr &addr) override;
 
@@ -36,11 +37,13 @@ namespace ferrum::io::net
         {
             FerrumAddr addr;
             FerrumAddr bind_addr;
+            bool is_server{false};
             CallbackOnOpen *callback_on_open{nullptr};
             CallbackOnRead *callback_on_read{nullptr};
             CallbackOnWrite *callback_on_write{nullptr};
             CallbackOnClose *callback_on_close{nullptr};
             CallbackOnError *callback_on_error{nullptr};
+            CallbackOnAccept *callback_on_accept{nullptr};
             // libuv fields
             uv_tcp_t tcp_data;
             uv_connect_t connect_data;
@@ -58,6 +61,7 @@ namespace ferrum::io::net
         friend void socket_on_read(uv_stream_t *handle, ssize_t nread, const uv_buf_t *rcvbuf);
         friend void socket_on_send(uv_write_t *req, int status);
         friend void socket_on_close(uv_handle_t *handle);
+        friend void socket_on_accept(uv_stream_t *, int);
     };
 
 }

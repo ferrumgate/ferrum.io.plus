@@ -72,5 +72,6 @@
     },
     "cmake.configureSettings": {
         "gtest_build_samples": "ON"
-    }
+    },
+    "C_Cpp.clang_format_fallbackStyle": "Visual Studio"
 }
