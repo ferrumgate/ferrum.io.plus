@@ -4,8 +4,8 @@ namespace ferrum::io::net {
 
   using namespace ferrum::io;
 
-  void socket_on_memory_alloc(uv_handle_t *client, size_t suggested_size,
-                              uv_buf_t *buf) {
+  void tcp_socket_on_memory_alloc(uv_handle_t *client, size_t suggested_size,
+                                  uv_buf_t *buf) {
     if(suggested_size <= 0) {
       log::Logger::warn("socket suggested_size is <0");
       return;
@@ -28,8 +28,8 @@ namespace ferrum::io::net {
 #endif
   }
 
-  void socket_on_read(uv_stream_t *handle, ssize_t nread,
-                      const uv_buf_t *rcvbuf) {
+  void tcp_socket_on_read(uv_stream_t *handle, ssize_t nread,
+                          const uv_buf_t *rcvbuf) {
     log::Logger::debug(
         std::format("socket on recv called readsize: {}", nread));
     auto socket = static_cast<FerrumSocketTcp::Socket *>(handle->data);
@@ -56,7 +56,7 @@ namespace ferrum::io::net {
     }
   }
 
-  void socket_on_connect(uv_connect_t *connection, int status) {
+  void tcp_socket_on_connect(uv_connect_t *connection, int status) {
     auto socket = static_cast<FerrumSocketTcp::Socket *>(connection->data);
 
     if(socket) {
@@ -73,7 +73,7 @@ namespace ferrum::io::net {
         uv_stream_t *stream =
             reinterpret_cast<uv_stream_t *>(&socket->tcp_data);
         auto result = common::FuncTable::uv_read_start(
-            stream, socket_on_memory_alloc, socket_on_read);
+            stream, tcp_socket_on_memory_alloc, tcp_socket_on_read);
         if(result) {
           log::Logger::error(
               std::format("tcp socket read start failed code: {} msg: {}",
@@ -92,7 +92,7 @@ namespace ferrum::io::net {
       }
     }
   }
-  void socket_on_send(uv_write_t *req, int status) {
+  void tcp_socket_on_send(uv_write_t *req, int status) {
     log::Logger::debug(
         std::format("socket on send called and status: {}", status));
 
@@ -117,7 +117,7 @@ namespace ferrum::io::net {
     delete req;
   }
 
-  void socket_on_close(uv_handle_t *handle) {
+  void tcp_socket_on_close(uv_handle_t *handle) {
     if(handle)
       if(handle->data && uv_is_closing(handle)) {
         auto socket = static_cast<FerrumSocketTcp::Socket *>(handle->data);
@@ -130,7 +130,7 @@ namespace ferrum::io::net {
       }
   }
 
-  void socket_on_accept(uv_stream_t *server, int status) {
+  void tcp_socket_on_accept(uv_stream_t *server, int status) {
     auto socket = static_cast<FerrumSocketTcp::Socket *>(server->data);
     if(status < 0) {
       log::Logger::debug(
@@ -174,8 +174,8 @@ namespace ferrum::io::net {
 
     uv_stream_t *stream =
         reinterpret_cast<uv_stream_t *>(&client->socket->tcp_data);
-    result = common::FuncTable::uv_read_start(stream, socket_on_memory_alloc,
-                                              socket_on_read);
+    result = common::FuncTable::uv_read_start(
+        stream, tcp_socket_on_memory_alloc, tcp_socket_on_read);
     if(result) {
       log::Logger::error(
           std::format("tcp socket read start failed code: {} msg: {}", result,
@@ -196,7 +196,9 @@ namespace ferrum::io::net {
 
   FerrumSocketTcp::FerrumSocketTcp(FerrumAddr &&addr, bool is_server)
       : FerrumSocket{},
-        socket{new Socket{addr, FerrumAddr{"0.0.0.0"}, is_server}} {
+        socket{new Socket{is_server ? FerrumAddr{"0.0.0.0"} : addr,
+                          is_server ? addr : FerrumAddr{"0.0.0.0"},
+                          is_server}} {
     auto loop = uv_default_loop();
     auto result = common::FuncTable::uv_tcp_init(loop, &socket->tcp_data);
     if(result < 0) {
@@ -227,13 +229,13 @@ namespace ferrum::io::net {
     FerrumSocket::~FerrumSocket();
   }
 
-  void FerrumSocketTcp::open() {
+  void FerrumSocketTcp::open(const FerrumSocketOptions &options) {
     if(socket->is_open_called) return;
     if(!socket->is_server) {
       socket->connect_data.data = socket;
       auto result = common::FuncTable::uv_tcp_connect(
           &socket->connect_data, &socket->tcp_data, socket->addr.get_addr(),
-          socket_on_connect);
+          tcp_socket_on_connect);
       if(result < 0) {
         throw error::BaseException(
             common::ErrorCodes::SocketError,
@@ -241,9 +243,9 @@ namespace ferrum::io::net {
                         uv_strerror(result)));
       }
     } else {
-      bind(socket->addr);
+      bind(socket->bind_addr);
       // if linux,then set reuse port option to socket
-      auto saddr = socket->addr.get_addr();
+      auto saddr = socket->bind_addr.get_addr();
       if(saddr->sa_family == AF_INET || saddr->sa_family == AF_INET6) {
         uv_os_fd_t fd;
         auto result = common::FuncTable::uv_fileno(
@@ -260,7 +262,7 @@ namespace ferrum::io::net {
 
       auto result = common::FuncTable::uv_listen(
           reinterpret_cast<uv_stream_t *>(&socket->tcp_data), 16,
-          socket_on_accept);
+          tcp_socket_on_accept);
       if(result < 0) {
         throw error::BaseException(
             common::ErrorCodes::SocketError,
@@ -268,7 +270,7 @@ namespace ferrum::io::net {
                         uv_strerror(result)));
       }
       log::Logger::info(std::format("socket started to listen at {}",
-                                    socket->addr.to_string(true)));
+                                    socket->bind_addr.to_string(true)));
     }
 
     socket->is_open_called = true;
@@ -293,7 +295,7 @@ namespace ferrum::io::net {
     if(!uv_is_closing(handle)) {
       log::Logger::info(std::format(" closing(reset) connection {}",
                                     socket->addr.to_string(true)));
-      uv_tcp_close_reset(&socket->tcp_data, socket_on_close);
+      uv_tcp_close_reset(&socket->tcp_data, tcp_socket_on_close);
     }
   }
   void FerrumSocketTcp::write(const BufferByte &data) {
@@ -312,7 +314,7 @@ namespace ferrum::io::net {
 
     auto result = common::FuncTable::uv_write(
         request, reinterpret_cast<uv_stream_t *>(&socket->tcp_data), &buf, 1,
-        socket_on_send);
+        tcp_socket_on_send);
     if(result < 0) {
       delete[] buf_ptr;
       delete request;

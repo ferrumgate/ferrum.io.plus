@@ -11,6 +11,7 @@
 namespace ferrum::io::net {
 
   struct FerrumShared {};
+  struct FerrumSocketOptions {};
 
   // zero copy buffer
   using BufferByte = memory::Buffer<std::byte>;  //  std::vector<std::byte>;
@@ -40,7 +41,7 @@ namespace ferrum::io::net {
     virtual void share(Shared shared) noexcept = 0;
     virtual void bind(const FerrumAddr &addr) = 0;
 
-    virtual void open() = 0;
+    virtual void open(const FerrumSocketOptions &options) = 0;
     virtual void close() noexcept = 0;
     virtual void write(const BufferByte &data) = 0;
     virtual void on_open(CallbackOnOpen func) noexcept = 0;

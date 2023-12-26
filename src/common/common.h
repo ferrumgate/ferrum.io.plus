@@ -65,6 +65,12 @@ namespace ferrum::io::common {
   using UVFileNo = int(const uv_handle_t *, uv_os_fd_t *);
   using UVListen = int(uv_stream_t *, int, uv_connection_cb);
 
+  using UVUdpInit = int(uv_loop_t *, uv_udp_t *);
+  using UVUdpInitEx = int(uv_loop_t *, uv_udp_t *, unsigned int);
+  using UVUdpBind = int(uv_udp_t *, const struct sockaddr *, unsigned int);
+
+  using UVUdpReadStart = int(uv_udp_t *, uv_alloc_cb, uv_udp_recv_cb);
+
   /**
    * @brief For writing test codes for c functions
    I think best easy way, no performance overhead
@@ -81,6 +87,10 @@ namespace ferrum::io::common {
     static UVTcpBind *uv_tcp_bind;
     static UVFileNo *uv_fileno;
     static UVListen *uv_listen;
+    static UVUdpInit *uv_udp_init;
+    static UVUdpInitEx *uv_udp_init_ex;
+    static UVUdpBind *uv_udp_bind;
+    static UVUdpReadStart *uv_udp_read_start;
     static void reset();
   };
 

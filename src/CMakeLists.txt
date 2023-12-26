@@ -6,6 +6,7 @@ set(FILES_CC
     error/base_exception.cc
     net/ferrum_addr.cc
     net/ferrum_socket_tcp.cc
+    net/ferrum_socket_udp.cc
 )
 
 add_executable(ferrum.io.plus.exec

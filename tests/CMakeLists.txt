@@ -18,6 +18,7 @@ add_executable(
     memory/buffer_test.cc
     net/ferrum_addr_test.cc
     net/ferrum_socket_tcp_test.cc
+    net/ferrum_socket_udp_test.cc
 )
 
 target_link_libraries(
