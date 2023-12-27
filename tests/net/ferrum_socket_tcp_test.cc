@@ -98,7 +98,7 @@ TEST_F(FerrumSocketTcpTest, socket_on_connect_called) {
   auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
   auto context = std::make_shared<CustomShared>(CustomShared{});
   socket.share(context);
-  socket.on_open([](Shared &shared) noexcept {
+  socket.on_open([](FerrumShared::Ptr &shared) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->connected = true;
   });
@@ -122,11 +122,11 @@ TEST_F(FerrumSocketTcpTest, socket_on_connect_failed) {
   auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9997});
   auto context = std::make_shared<CustomShared>(CustomShared{});
   socket.share(context);
-  socket.on_open([](Shared &shared) noexcept {
+  socket.on_open([](FerrumShared::Ptr &shared) noexcept {
     auto cls = reinterpret_cast<CustomShared *>(shared.get());
     cls->connected = true;
   });
-  socket.on_error([](Shared &shared, auto error) noexcept {
+  socket.on_error([](FerrumShared::Ptr &shared, auto error) noexcept {
     auto cls = reinterpret_cast<CustomShared *>(shared.get());
     cls->onError = true;
   });
@@ -155,11 +155,11 @@ TEST_F(FerrumSocketTcpTest, socket_on_connect_uv_read_start_failed) {
   auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
   auto context = std::make_shared<CustomShared>(CustomShared{});
   socket.share(context);
-  socket.on_open([](Shared &shared) noexcept {
+  socket.on_open([](FerrumShared::Ptr &shared) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->connected = true;
   });
-  socket.on_error([](Shared &shared, auto error) noexcept {
+  socket.on_error([](FerrumShared::Ptr &shared, auto error) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->onError = true;
   });
@@ -190,15 +190,16 @@ TEST_F(FerrumSocketTcpTest, uv_write_failed) {
   auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9998});
   auto context = std::make_shared<CustomShared>(CustomShared{});
   socket.share(context);
-  socket.on_error([](Shared &shared, BaseException ex) noexcept {
+  socket.on_error([](FerrumShared::Ptr &shared, BaseException ex) noexcept {
     std::cout << ex.get_message() << std::endl;
   });
-  socket.on_read([](Shared &shared, const BufferByte &data) noexcept {
-    auto cls = static_cast<CustomShared *>(shared.get());
-    auto str = data.to_string();
-    cls->data_s.append(str);
-  });
-  socket.on_open([](Shared &shared) noexcept {
+  socket.on_read(
+      [](FerrumShared::Ptr &shared, const BufferByte &data) noexcept {
+        auto cls = static_cast<CustomShared *>(shared.get());
+        auto str = data.to_string();
+        cls->data_s.append(str);
+      });
+  socket.on_open([](FerrumShared::Ptr &shared) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->connected = true;
     cls->counter++;
@@ -238,15 +239,16 @@ Accept: text/html\r\n\
     auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 8080});
     auto context = std::make_shared<CustomShared>(CustomShared{});
     socket.share(context);
-    socket.on_error([](Shared &shared, BaseException ex) noexcept {
+    socket.on_error([](FerrumShared::Ptr &shared, BaseException ex) noexcept {
       std::cout << ex.get_message() << std::endl;
     });
-    socket.on_read([](Shared &shared, const BufferByte &data) noexcept {
-      auto cls = static_cast<CustomShared *>(shared.get());
-      auto str = data.to_string();
-      cls->data_s.append(str);
-    });
-    socket.on_open([](Shared &shared) noexcept {
+    socket.on_read(
+        [](FerrumShared::Ptr &shared, const BufferByte &data) noexcept {
+          auto cls = static_cast<CustomShared *>(shared.get());
+          auto str = data.to_string();
+          cls->data_s.append(str);
+        });
+    socket.on_open([](FerrumShared::Ptr &shared) noexcept {
       auto cls = static_cast<CustomShared *>(shared.get());
       cls->connected = true;
       cls->counter++;
@@ -287,15 +289,16 @@ Accept: text/html\r\n\
     auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 8080});
     auto context = std::make_shared<CustomShared>(CustomShared{});
     socket.share(context);
-    socket.on_error([](Shared &shared, BaseException ex) noexcept {
+    socket.on_error([](FerrumShared::Ptr &shared, BaseException ex) noexcept {
       std::cout << ex.get_message() << std::endl;
     });
-    socket.on_read([](Shared &shared, const BufferByte &data) noexcept {
-      auto cls = static_cast<CustomShared *>(shared.get());
-      auto str = data.to_string();
-      cls->data_s.append(str);
-    });
-    socket.on_open([](Shared &shared) noexcept {
+    socket.on_read(
+        [](FerrumShared::Ptr &shared, const BufferByte &data) noexcept {
+          auto cls = static_cast<CustomShared *>(shared.get());
+          auto str = data.to_string();
+          cls->data_s.append(str);
+        });
+    socket.on_open([](FerrumShared::Ptr &shared) noexcept {
       auto cls = static_cast<CustomShared *>(shared.get());
       cls->connected = true;
       cls->counter++;
@@ -336,15 +339,16 @@ Accept: text/html\r\n\
   auto context = std::make_shared<CustomShared>(CustomShared{});
   socket.share(context);
   socket.bind(FerrumAddr{"127.0.0.1", 25000});
-  socket.on_error([](Shared &shared, BaseException ex) noexcept {
+  socket.on_error([](FerrumShared::Ptr &shared, BaseException ex) noexcept {
     std::cout << ex.get_message() << std::endl;
   });
-  socket.on_read([](Shared &shared, const BufferByte &data) noexcept {
-    auto cls = static_cast<CustomShared *>(shared.get());
-    auto str = data.to_string();
-    cls->data_s.append(str);
-  });
-  socket.on_open([](Shared &shared) noexcept {
+  socket.on_read(
+      [](FerrumShared::Ptr &shared, const BufferByte &data) noexcept {
+        auto cls = static_cast<CustomShared *>(shared.get());
+        auto str = data.to_string();
+        cls->data_s.append(str);
+      });
+  socket.on_open([](FerrumShared::Ptr &shared) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->connected = true;
     cls->counter++;
@@ -376,11 +380,11 @@ TEST_F(FerrumSocketTcpTest, on_close) {
   auto socket = FerrumSocketTcp(FerrumAddr{"127.0.0.1", 9992});
   auto context = std::make_shared<CustomShared>(CustomShared{.socket = socket});
   socket.share(context);
-  socket.on_open([](Shared &shared) noexcept {
+  socket.on_open([](FerrumShared::Ptr &shared) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->connected = true;
   });
-  socket.on_error([](Shared &shared, auto error) noexcept {
+  socket.on_error([](FerrumShared::Ptr &shared, auto error) noexcept {
     auto cls = static_cast<CustomShared *>(shared.get());
     cls->onError = true;
     cls->socket.close();
@@ -441,41 +445,43 @@ TEST_F(FerrumSocketTcpTest, server_mode) {
       CustomContext{.socket = server, .global = global});
 
   server->share(contextServer);
-  server->on_error([](Shared &shared, BaseException ex) noexcept {
+  server->on_error([](FerrumShared::Ptr &shared, BaseException ex) noexcept {
     auto cls = static_cast<CustomContext *>(shared.get());
     cls->isError = true;
   });
 
-  server->on_accept([](Shared &shared, FerrumSocketShared &client) noexcept {
+  server->on_accept([](FerrumShared::Ptr &shared,
+                       FerrumSocketTcp::Ptr &client) noexcept {
     auto shared_ptr = std::reinterpret_pointer_cast<CustomContext>(shared);
     shared_ptr->isConnected = true;
-    auto client_ptr = std::reinterpret_pointer_cast<FerrumSocketTcp>(client);
+
     auto contextClient =
         std::make_shared<CustomContext>(CustomContext{.id = lastCounter++,
                                                       .isConnected = true,
                                                       .isError = false,
-                                                      .socket = client_ptr});
+                                                      .socket = client});
     contextClient->global = shared_ptr->global;
     contextClient->global->isClientConnected = true;
     shared_ptr->global->sockets.push_back(contextClient);
 
-    client_ptr->share(contextClient);
-    client_ptr->on_error([](Shared &shared, BaseException ex) noexcept {
+    client->share(contextClient);
+    client->on_error([](FerrumShared::Ptr &shared, BaseException ex) noexcept {
       auto context = std::reinterpret_pointer_cast<CustomContext>(shared);
       context->global->isClientError = true;
       context->isError = true;
       context->socket->close();
     });
-    client_ptr->on_read([](Shared &shared, const BufferByte &data) noexcept {
-      auto context = std::reinterpret_pointer_cast<CustomContext>(shared);
-      context->isReaded = true;
-      context->global->isClientReaded = true;
-      const char *msg = "hello";
-      context->socket->write(BufferByte(
-          reinterpret_cast<const std::byte *>(msg), strlen(msg) + 1));
-    });
+    client->on_read(
+        [](FerrumShared::Ptr &shared, const BufferByte &data) noexcept {
+          auto context = std::reinterpret_pointer_cast<CustomContext>(shared);
+          context->isReaded = true;
+          context->global->isClientReaded = true;
+          const char *msg = "hello";
+          context->socket->write(BufferByte(
+              reinterpret_cast<const std::byte *>(msg), strlen(msg) + 1));
+        });
 
-    client_ptr->on_close([](Shared &shared) noexcept {
+    client->on_close([](FerrumShared::Ptr &shared) noexcept {
       auto context = std::reinterpret_pointer_cast<CustomContext>(shared);
       context->global->isClientClosed = true;
       std::remove_if(

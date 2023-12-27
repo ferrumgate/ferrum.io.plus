@@ -52,14 +52,14 @@ namespace ferrum::io::net {
         log::Logger::debug(std::format("socket receive nread:{} buflen:{}\n",
                                        nread, rcvbuf->len));
         socket->read_buffer.resize(nread);
-        auto faddr = FerrumAddr{addr, false};
-        socket->addr = faddr;
-        socket->callback_on_read(socket->shared, socket->read_buffer);
+
+        socket->callback_on_read(socket->shared, socket->read_buffer,
+                                 FerrumAddr{addr, false});
       }
     }
   }
 
-  void udp_socket_on_send(uv_write_t *req, int status) {
+  void udp_socket_on_send(uv_udp_send_t *req, int status) {
     log::Logger::debug(
         std::format("socket on send called and status: {}", status));
 
@@ -98,8 +98,7 @@ namespace ferrum::io::net {
   }
 
   FerrumSocketUdp::FerrumSocketUdp(FerrumAddr &&addr, bool is_server)
-      : FerrumSocket{},
-        socket{new Socket{is_server ? FerrumAddr{"0.0.0.0"} : addr,
+      : socket{new Socket{is_server ? FerrumAddr{"0.0.0.0"} : addr,
                           is_server ? addr : FerrumAddr{"0.0.0.0"},
                           is_server}} {
     auto loop = uv_default_loop();
@@ -113,23 +112,18 @@ namespace ferrum::io::net {
   }
 
   FerrumSocketUdp::FerrumSocketUdp(FerrumSocketUdp &&other)
-      : FerrumSocket{std::move(other)},
-        socket(std::move(other.socket))
+      : socket(std::move(other.socket))
 
   {
     other.socket = nullptr;
   }
   FerrumSocketUdp &FerrumSocketUdp::operator=(FerrumSocketUdp &&other) {
-    FerrumSocket::operator=(std::move(other));
     delete socket;
     socket = std::move(other.socket);
     other.socket = nullptr;
     return *this;
   }
-  FerrumSocketUdp::~FerrumSocketUdp() {
-    close();
-    FerrumSocket::~FerrumSocket();
-  }
+  FerrumSocketUdp::~FerrumSocketUdp() { close(); }
 
   void FerrumSocketUdp::open(const FerrumSocketOptions &options) {
     if(socket->is_open_called) return;
@@ -143,7 +137,8 @@ namespace ferrum::io::net {
       log::Logger::info(std::format("socket started to listen at {}",
                                     socket->bind_addr.to_string(true)));
     }
-    uv_stream_t *stream = reinterpret_cast<uv_stream_t *>(&socket->udp_data);
+    socket->is_open_called = true;
+    // uv_stream_t *stream = reinterpret_cast<uv_stream_t *>(&socket->udp_data);
     auto result = common::FuncTable::uv_udp_read_start(
         &socket->udp_data, udp_socket_on_memory_alloc, udp_socket_on_read);
     if(result) {
@@ -157,7 +152,6 @@ namespace ferrum::io::net {
                       uv_strerror(result)));
     }
 
-    socket->is_open_called = true;
     if(socket->callback_on_open) {
       socket->callback_on_open(socket->shared);
     }
@@ -185,7 +179,7 @@ namespace ferrum::io::net {
       uv_close(handle, udp_socket_on_close);
     }
   }
-  void FerrumSocketUdp::write(const BufferByte &data) {
+  void FerrumSocketUdp::write(const BufferByte &data, const FerrumAddr &addr) {
     if(uv_is_closing(reinterpret_cast<uv_handle_t *>(&socket->udp_data))) {
       throw error::BaseException(common::ErrorCodes::SocketError,
                                  std::format("socket is closing"));
@@ -194,14 +188,14 @@ namespace ferrum::io::net {
     // std::make_unique<uv_write_t>(uv_write_t{});
     auto buf_ptr = data.clone_ptr();  // this must be first, if exception
                                       // occures memory safety
-    auto request = new uv_write_t;
+    auto request = new uv_udp_send_t;
     request->data = buf_ptr;
 
     uv_buf_t buf = uv_buf_init(reinterpret_cast<char *>(buf_ptr), data.size());
 
-    auto result = common::FuncTable::uv_write(
-        request, reinterpret_cast<uv_stream_t *>(&socket->udp_data), &buf, 1,
-        udp_socket_on_send);
+    auto result =
+        common::FuncTable::uv_udp_write(request, &socket->udp_data, &buf, 1,
+                                        addr.get_addr(), udp_socket_on_send);
     if(result < 0) {
       delete[] buf_ptr;
       delete request;
@@ -227,10 +221,13 @@ namespace ferrum::io::net {
   void FerrumSocketUdp::on_error(CallbackOnError func) noexcept {
     socket->callback_on_error = func;
   }
-  void FerrumSocketUdp::on_accept(CallbackOnAccept func) noexcept {
-    socket->callback_on_accept = func;
-  }
-  void FerrumSocketUdp::share(Shared shared) noexcept {
+
+  void FerrumSocketUdp::share(FerrumShared::Ptr shared) noexcept {
     socket->shared = shared;
+  }
+
+  const FerrumAddr &FerrumSocketUdp::addr() const { return socket->addr; }
+  const FerrumAddr &FerrumSocketUdp::bind_addr() const {
+    return socket->bind_addr;
   }
 }  // namespace ferrum::io::net

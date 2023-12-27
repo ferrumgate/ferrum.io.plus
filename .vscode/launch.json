@@ -1,7 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "(gdb) Launch",
             "type": "cppdbg",
@@ -23,7 +22,10 @@
                     "value": "Something something"
                 }
             ],
-            "console": "externalTerminal",
+            "externalConsole": false,
+            "avoidWindowsConsoleRedirection": true,
+            "filterStdout": true,
+            "filterStderr": true,
             "MIMode": "gdb",
             "setupCommands": [
                 {

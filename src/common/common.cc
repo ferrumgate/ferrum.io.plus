@@ -16,6 +16,7 @@ namespace ferrum::io::common {
   UVUdpInitEx *FuncTable::uv_udp_init_ex{::uv_udp_init_ex};
   UVUdpBind *FuncTable::uv_udp_bind{::uv_udp_bind};
   UVUdpReadStart *FuncTable::uv_udp_read_start{::uv_udp_recv_start};
+  UVUdpWrite *FuncTable::uv_udp_write{::uv_udp_send};
 
   void FuncTable::reset() {
     FuncTable::malloc = std::malloc;
@@ -34,6 +35,7 @@ namespace ferrum::io::common {
     FuncTable::uv_udp_init_ex = ::uv_udp_init_ex;
     FuncTable::uv_udp_bind = ::uv_udp_bind;
     FuncTable::uv_udp_read_start = ::uv_udp_recv_start;
+    FuncTable::uv_udp_write = ::uv_udp_send;
   }
 
 }  // namespace ferrum::io::common

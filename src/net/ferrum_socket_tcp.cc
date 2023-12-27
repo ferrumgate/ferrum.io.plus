@@ -189,14 +189,12 @@ namespace ferrum::io::net {
                             result, uv_strerror(result))));
       }
     } else if(socket->callback_on_accept) {
-      auto client_casted = std::static_pointer_cast<FerrumSocket>(client);
-      socket->callback_on_accept(socket->shared, client_casted);
+      socket->callback_on_accept(socket->shared, client);
     }
   }
 
   FerrumSocketTcp::FerrumSocketTcp(FerrumAddr &&addr, bool is_server)
-      : FerrumSocket{},
-        socket{new Socket{is_server ? FerrumAddr{"0.0.0.0"} : addr,
+      : socket{new Socket{is_server ? FerrumAddr{"0.0.0.0"} : addr,
                           is_server ? addr : FerrumAddr{"0.0.0.0"},
                           is_server}} {
     auto loop = uv_default_loop();
@@ -211,23 +209,18 @@ namespace ferrum::io::net {
   }
 
   FerrumSocketTcp::FerrumSocketTcp(FerrumSocketTcp &&other)
-      : FerrumSocket{std::move(other)},
-        socket(std::move(other.socket))
+      : socket(std::move(other.socket))
 
   {
     other.socket = nullptr;
   }
   FerrumSocketTcp &FerrumSocketTcp::operator=(FerrumSocketTcp &&other) {
-    FerrumSocket::operator=(std::move(other));
     delete socket;
     socket = std::move(other.socket);
     other.socket = nullptr;
     return *this;
   }
-  FerrumSocketTcp::~FerrumSocketTcp() {
-    close();
-    FerrumSocket::~FerrumSocket();
-  }
+  FerrumSocketTcp::~FerrumSocketTcp() { close(); }
 
   void FerrumSocketTcp::open(const FerrumSocketOptions &options) {
     if(socket->is_open_called) return;
@@ -343,7 +336,7 @@ namespace ferrum::io::net {
   void FerrumSocketTcp::on_accept(CallbackOnAccept func) noexcept {
     socket->callback_on_accept = func;
   }
-  void FerrumSocketTcp::share(Shared shared) noexcept {
+  void FerrumSocketTcp::share(FerrumShared::Ptr shared) noexcept {
     socket->shared = shared;
   }
 }  // namespace ferrum::io::net

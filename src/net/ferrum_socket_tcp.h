@@ -9,7 +9,20 @@
 
 namespace ferrum::io::net {
 
-  class FerrumSocketTcp : public FerrumSocket {
+  class FerrumSocketTcp {
+   public:
+    using Ptr = std::shared_ptr<FerrumSocketTcp>;
+    // callbacks for all typeof sockets
+    using CallbackOnOpen = void(FerrumShared::Ptr &) noexcept;
+    using CallbackOnRead = void(FerrumShared::Ptr &,
+                                const BufferByte &data) noexcept;
+    using CallbackOnWrite = void(FerrumShared::Ptr &) noexcept;
+    using CallbackOnClose = void(FerrumShared::Ptr &) noexcept;
+    using CallbackOnError = void(FerrumShared::Ptr &,
+                                 error::BaseException) noexcept;
+    // for server accept callback
+    using CallbackOnAccept = void(FerrumShared::Ptr &, Ptr &client) noexcept;
+
    public:
     FerrumSocketTcp(FerrumAddr &&addr, bool is_server = false);
     FerrumSocketTcp(FerrumSocketTcp &&socket);
@@ -18,17 +31,17 @@ namespace ferrum::io::net {
     FerrumSocketTcp &operator=(const FerrumSocketTcp &socket) = delete;
     virtual ~FerrumSocketTcp();
 
-    virtual void open(const FerrumSocketOptions &options) override;
-    virtual void close() noexcept override;
-    virtual void write(const BufferByte &data) override;
-    virtual void on_open(CallbackOnOpen func) noexcept override;
-    virtual void on_read(CallbackOnRead func) noexcept override;
-    virtual void on_write(CallbackOnWrite func) noexcept override;
-    virtual void on_close(CallbackOnClose func) noexcept override;
-    virtual void on_error(CallbackOnError func) noexcept override;
-    virtual void on_accept(CallbackOnAccept func) noexcept override;
-    virtual void share(Shared shared) noexcept override;
-    virtual void bind(const FerrumAddr &addr) override;
+    virtual void open(const FerrumSocketOptions &options);
+    virtual void close() noexcept;
+    virtual void write(const BufferByte &data);
+    virtual void on_open(CallbackOnOpen func) noexcept;
+    virtual void on_read(CallbackOnRead func) noexcept;
+    virtual void on_write(CallbackOnWrite func) noexcept;
+    virtual void on_close(CallbackOnClose func) noexcept;
+    virtual void on_error(CallbackOnError func) noexcept;
+    virtual void on_accept(CallbackOnAccept func) noexcept;
+    virtual void share(FerrumShared::Ptr shared) noexcept;
+    virtual void bind(const FerrumAddr &addr);
 
    protected:
     struct Socket {
@@ -48,7 +61,7 @@ namespace ferrum::io::net {
       BufferByte read_buffer;
       bool is_close_called{false};
       bool is_open_called{false};
-      Shared shared;
+      FerrumShared::Ptr shared;
     };
     Socket *socket{nullptr};
 

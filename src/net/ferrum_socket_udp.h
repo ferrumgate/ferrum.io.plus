@@ -9,7 +9,18 @@
 
 namespace ferrum::io::net {
 
-  class FerrumSocketUdp : public FerrumSocket {
+  class FerrumSocketUdp {
+   public:
+    using Ptr = std::shared_ptr<FerrumSocketUdp>;
+    // callbacks for all typeof sockets
+    using CallbackOnOpen = void(FerrumShared::Ptr &) noexcept;
+    using CallbackOnRead = void(FerrumShared::Ptr &, const BufferByte &data,
+                                FerrumAddr &&addr) noexcept;
+    using CallbackOnWrite = void(FerrumShared::Ptr &) noexcept;
+    using CallbackOnClose = void(FerrumShared::Ptr &) noexcept;
+    using CallbackOnError = void(FerrumShared::Ptr &,
+                                 error::BaseException) noexcept;
+
    public:
     FerrumSocketUdp(FerrumAddr &&addr, bool is_server = false);
     FerrumSocketUdp(FerrumSocketUdp &&socket);
@@ -18,18 +29,20 @@ namespace ferrum::io::net {
     FerrumSocketUdp &operator=(const FerrumSocketUdp &socket) = delete;
     virtual ~FerrumSocketUdp();
 
-    virtual void open(const FerrumSocketOptions &options) override;
-    virtual void close() noexcept override;
-    virtual void write(const BufferByte &data) override;
-    virtual void on_open(CallbackOnOpen func) noexcept override;
-    virtual void on_read(CallbackOnRead func) noexcept override;
-    virtual void on_write(CallbackOnWrite func) noexcept override;
-    virtual void on_close(CallbackOnClose func) noexcept override;
-    virtual void on_error(CallbackOnError func) noexcept override;
-    // does not meaning full on udp sockets
-    virtual void on_accept(CallbackOnAccept func) noexcept override;
-    virtual void share(Shared shared) noexcept override;
-    virtual void bind(const FerrumAddr &addr) override;
+    virtual void open(const FerrumSocketOptions &options);
+    virtual void close() noexcept;
+    virtual void write(const BufferByte &data, const FerrumAddr &addr);
+    virtual void on_open(CallbackOnOpen func) noexcept;
+    virtual void on_read(CallbackOnRead func) noexcept;
+    virtual void on_write(CallbackOnWrite func) noexcept;
+    virtual void on_close(CallbackOnClose func) noexcept;
+    virtual void on_error(CallbackOnError func) noexcept;
+
+    virtual void share(FerrumShared::Ptr shared) noexcept;
+    virtual void bind(const FerrumAddr &addr);
+
+    const FerrumAddr &addr() const;
+    const FerrumAddr &bind_addr() const;
 
    protected:
     struct Socket {
@@ -41,7 +54,7 @@ namespace ferrum::io::net {
       CallbackOnWrite *callback_on_write{nullptr};
       CallbackOnClose *callback_on_close{nullptr};
       CallbackOnError *callback_on_error{nullptr};
-      CallbackOnAccept *callback_on_accept{nullptr};
+
       // libuv fields
       uv_udp_t udp_data;
       uv_connect_t connect_data;
@@ -49,7 +62,7 @@ namespace ferrum::io::net {
       BufferByte read_buffer;
       bool is_close_called{false};
       bool is_open_called{false};
-      Shared shared;
+      FerrumShared::Ptr shared;
     };
     Socket *socket{nullptr};
 
@@ -61,7 +74,7 @@ namespace ferrum::io::net {
     friend void udp_socket_on_read(uv_udp_t *handle, ssize_t nread,
                                    const uv_buf_t *rcvbuf,
                                    const struct sockaddr *addr, unsigned flags);
-    friend void udp_socket_on_send(uv_write_t *req, int status);
+    friend void udp_socket_on_send(uv_udp_send_t *req, int status);
     friend void udp_socket_on_close(uv_handle_t *handle);
     friend void udp_socket_on_accept(uv_stream_t *, int);
   };

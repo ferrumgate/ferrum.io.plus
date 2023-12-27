@@ -70,6 +70,8 @@ namespace ferrum::io::common {
   using UVUdpBind = int(uv_udp_t *, const struct sockaddr *, unsigned int);
 
   using UVUdpReadStart = int(uv_udp_t *, uv_alloc_cb, uv_udp_recv_cb);
+  using UVUdpWrite = int(uv_udp_send_t *, uv_udp_t *, const uv_buf_t[],
+                         unsigned int, const struct sockaddr *, uv_udp_send_cb);
 
   /**
    * @brief For writing test codes for c functions
@@ -91,6 +93,7 @@ namespace ferrum::io::common {
     static UVUdpInitEx *uv_udp_init_ex;
     static UVUdpBind *uv_udp_bind;
     static UVUdpReadStart *uv_udp_read_start;
+    static UVUdpWrite *uv_udp_write;
     static void reset();
   };
 
